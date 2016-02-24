@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Find Phone By Sms</string>
+    <string name="user_settings">com.example.findphonebysms.preferences</string>
+    <string name="testLocationButtonText">Test Location</string>
+    <string name="keyTextDefault">findphonebysms</string>
+
+    <string name="locationNotAvailable">нет данных о местоположении</string>
+
+    <string name="saveSettingsButtonText">Save settings</string>
+    <string name="saveSettingsDialogMessage">Settings was saved.</string>
+    <string name="saveSettingDialogTitle">Current Location</string>
+
+</resources>
