@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.findphonebysms">
+    package="com.github.iaveryanov.findphonebysms">
 
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.SEND_SMS" />
@@ -15,7 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         >
-        <activity android:name=".MainActivity">
+        <activity android:name="com.github.iaveryanov.findphonebysms.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -24,7 +24,7 @@
         </activity>
 
         <receiver
-            android:name=".BootReceiver"
+            android:name="com.github.iaveryanov.findphonebysms.BootReceiver"
             android:enabled="true"
             android:permission="android.permission.RECEIVE_BOOT_COMPLETED" >
             <intent-filter>
@@ -33,7 +33,7 @@
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".SmsReceiver">
+        <receiver android:name="com.github.iaveryanov.findphonebysms.SmsReceiver">
             <intent-filter
                 android:exported="true"
                 android:priority="2147483647">
