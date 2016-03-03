@@ -30,9 +30,10 @@ public class SmsReceiver extends BroadcastReceiver {
             }
             for (SmsMessage message : messages) {
                 String num = message.getOriginatingAddress();
+                String smsText = " " + nullToEmpty(message.getMessageBody()).trim().toLowerCase() + " ";
                 // not alpha numeric and with key text
                 if (num.matches("\\+?[0-9]+")
-                    && message.getMessageBody().toLowerCase().contains(keyText)) {
+                        && smsText.contains(keyText)) {
                     Log.d(MainActivity.TAG, "key text:" + keyText + ", identified!");
                     requestReceived(context, num);
                 }
@@ -49,8 +50,16 @@ public class SmsReceiver extends BroadcastReceiver {
         String keyTextDefault = context.getString(R.string.keyTextDefault);
         String settingsName = context.getString(R.string.user_settings);
         String keyText = context.getSharedPreferences(settingsName, 0).getString(MainActivity.keyTextSetting, keyTextDefault);
-        keyText = (keyText == null || keyText.trim().length() == 0) ? keyTextDefault : keyText;
-        keyText = keyText.toLowerCase();
+        keyText = isNullOrEmpty(keyText) ? keyTextDefault : keyText;
+        keyText = " " + keyText.trim().toLowerCase() + " ";
         return keyText;
+    }
+
+    private boolean isNullOrEmpty(String text) {
+        return text == null || text.trim().length() == 0;
+    }
+
+    private String nullToEmpty(String text) {
+        return text != null ? text : "";
     }
 }

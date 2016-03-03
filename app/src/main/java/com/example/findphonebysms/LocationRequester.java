@@ -1,6 +1,7 @@
 package com.example.findphonebysms;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -11,8 +12,11 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.telephony.SmsManager;
+import android.text.SpannableString;
+import android.text.method.LinkMovementMethod;
+import android.text.util.Linkify;
 import android.util.Log;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -29,39 +33,40 @@ public class LocationRequester implements GoogleApiClient.ConnectionCallbacks,
     private final Context context;
     private final String address;
 
-    private static GoogleApiClient mGoogleApiClient;
+    private GoogleApiClient mGoogleApiClient;
 
     private Timer timerWaitUpdates;
 
     /**
      * The desired interval for location updates. Inexact. Updates may be more or less frequent.
      */
-    public static final long UPDATE_INTERVAL_IN_MILLIS = 1000;
+    public static final long UPDATE_INTERVAL_IN_MILLIS = 5000;
 
     /**
      * The fastest rate for active location updates. Exact. Updates will never be more frequent
      * than this value.
      */
-    public static final long FASTEST_UPDATE_INTERVAL_IN_MILLIS = 1000;
+    public static final long FASTEST_UPDATE_INTERVAL_IN_MILLIS = 5000;
 
     public static final int TIMER_WAIT_UPDATES_MILLIS = 15000;
 
     public LocationRequester(Context context, String address) {
         this.context = context;
         this.address = address;
-        startLocationService();
-        Log.i(MainActivity.TAG, "init");
     }
 
     public void request() {
         timerWaitUpdates = new Timer();
-        timerWaitUpdates.schedule(new TimerTask() {
+        TimerTask task = new TimerTask() {
             @Override
             public void run() {
+                Location location = requestLastLocation();
+                onReceiveLocation(location);
                 stopLocationService();
-                onReceiveLocation(requestLastLocation());
             }
-        }, TIMER_WAIT_UPDATES_MILLIS);
+        };
+        timerWaitUpdates.schedule(task, TIMER_WAIT_UPDATES_MILLIS);
+        startLocationService();
     }
 
     private void stopLocationService() {
@@ -82,12 +87,10 @@ public class LocationRequester implements GoogleApiClient.ConnectionCallbacks,
         if (!mGoogleApiClient.isConnected()) {
             mGoogleApiClient.connect();
         }
-        Log.i(MainActivity.TAG, "startLocationService");
     }
 
     @Override
     public void onConnected(Bundle bundle) {
-        Log.d(MainActivity.TAG, "onConnected");
         if (!checkPermission()) return;
         LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, createLocationRequest(), this);
     }
@@ -128,12 +131,17 @@ public class LocationRequester implements GoogleApiClient.ConnectionCallbacks,
 
     @Override
     public void onLocationChanged(Location location) {
-        Log.d(MainActivity.TAG, "fused updated:" + location);
+        Log.d(MainActivity.TAG, "location updated:" + location);
         if (location != null) {
-            timerWaitUpdates.cancel();
+            stopTimer();
             stopLocationService();
             onReceiveLocation(location);
         }
+    }
+
+    private void stopTimer() {
+        timerWaitUpdates.cancel();
+        timerWaitUpdates = null;
     }
 
     private void onReceiveLocation(final Location location) {
@@ -143,15 +151,33 @@ public class LocationRequester implements GoogleApiClient.ConnectionCallbacks,
             SmsManager.getDefault().sendTextMessage(address, null, text, null, null);
         } else {
             // for test-location button
-            Log.i(MainActivity.TAG, text);
-            // running code in the UI thread
-            new Handler(Looper.getMainLooper()).post(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(context, text, Toast.LENGTH_LONG).show();
-                }
-            });
+            Log.d(MainActivity.TAG, text);
+            showDialog(text);
+
         }
+    }
+
+    private void showDialog(final String text) {
+        // running code in the UI thread
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                // Linkify the message
+                SpannableString ss = new SpannableString(text);
+                Linkify.addLinks(ss, Linkify.WEB_URLS);
+
+                AlertDialog dialog = new AlertDialog.Builder(context)
+                        .setTitle(R.string.saveSettingDialogTitle)
+                        .setPositiveButton("OK", null)
+                        .setMessage(ss)
+                        .create();
+
+                dialog.show();
+
+                // Make the textview clickable. Must be called after show()
+                ((TextView) dialog.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
+            }
+        });
     }
 
     private String createLocationMessage(Location loc) {
